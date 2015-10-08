@@ -21,7 +21,7 @@ Configure it in an initializer:
       end
     end
 
-For full configuration options, please see the [Documentation][http://www.rubydoc.info/gems/sidekiq-datadog].
+For full configuration options, please see the [Documentation](http://www.rubydoc.info/gems/sidekiq-datadog).
 
 ## Contributing
 
