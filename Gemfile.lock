@@ -1,0 +1,47 @@
+PATH
+  remote: .
+  specs:
+    sidekiq-datadog (0.3.0)
+      dogstatsd-ruby
+      sidekiq
+
+GEM
+  remote: https://rubygems.org/
+  specs:
+    concurrent-ruby (1.0.0)
+    connection_pool (2.2.0)
+    diff-lcs (1.2.5)
+    dogstatsd-ruby (1.5.0)
+    json (1.8.3)
+    rake (10.4.2)
+    redis (3.2.2)
+    rspec (3.4.0)
+      rspec-core (~> 3.4.0)
+      rspec-expectations (~> 3.4.0)
+      rspec-mocks (~> 3.4.0)
+    rspec-core (3.4.1)
+      rspec-support (~> 3.4.0)
+    rspec-expectations (3.4.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.4.0)
+    rspec-mocks (3.4.0)
+      diff-lcs (>= 1.2.0, < 2.0)
+      rspec-support (~> 3.4.0)
+    rspec-support (3.4.1)
+    sidekiq (4.0.1)
+      concurrent-ruby (~> 1.0)
+      connection_pool (~> 2.2, >= 2.2.0)
+      json (~> 1.0)
+      redis (~> 3.2, >= 3.2.1)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  bundler
+  rake
+  rspec (~> 3.0)
+  sidekiq-datadog!
+
+BUNDLED WITH
+   1.10.6
