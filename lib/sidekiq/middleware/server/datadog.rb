@@ -57,6 +57,9 @@ module Sidekiq
 
           def record(worker, job, queue, start, error = nil)
             ms   = ((Time.now - start) * 1000).round
+            if job["created_at"]
+              queued_ms = start - Time.at(job["created_at"])
+            end
             name = underscore(job['wrapped'] || worker.class.to_s)
             tags = @tags.map do |tag|
               case tag when String then tag when Proc then tag.call(worker, job, queue, error) end
@@ -74,6 +77,9 @@ module Sidekiq
 
             @statsd.increment @metric_name, :tags => tags
             @statsd.timing "#{@metric_name}.time", ms, :tags => tags
+            if queued_ms
+              @statsd.timing "#{@metric_name}.queued_time", queued_ms, :tags => tags
+            end
           end
 
           def underscore(word)
