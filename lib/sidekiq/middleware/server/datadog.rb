@@ -57,8 +57,8 @@ module Sidekiq
 
           def record(worker, job, queue, start, error = nil)
             ms   = ((Time.now - start) * 1000).round
-            if job.key?["enqueued_at"]
-              queued_ms = start - Time.at(job["enqueued _at"])
+            if job["enqueued_at"]
+              queued_ms = start - Time.at(job["enqueued_at"])
             end
             name = underscore(job['wrapped'] || worker.class.to_s)
             tags = @tags.map do |tag|
