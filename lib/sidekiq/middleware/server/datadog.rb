@@ -29,7 +29,7 @@ module Sidekiq
           statsd_port   = (opts[:statsd_port] || ENV['STATSD_PORT'] || 8125).to_i
 
           @metric_name  = opts[:metric_name] || "sidekiq.job"
-          @statsd       = opts[:statsd] || ::Statsd.new(statsd_host, statsd_port)
+          @statsd       = opts[:statsd] || ::Datadog::Statsd.new(statsd_host, statsd_port)
           @tags         = opts[:tags] || []
 
           if @tags.none? {|t| t =~ /^host\:/ }
