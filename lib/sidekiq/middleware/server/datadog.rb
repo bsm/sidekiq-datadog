@@ -1,6 +1,6 @@
 require 'sidekiq'
 require 'sidekiq/datadog/version'
-require 'statsd'
+require 'datadog/statsd'
 require 'socket'
 
 module Sidekiq
