@@ -2,7 +2,7 @@ PATH
   remote: .
   specs:
     sidekiq-datadog (0.3.4)
-      dogstatsd-ruby (~> 2.0.0)
+      dogstatsd-ruby (>= 2.0.0)
       sidekiq
 
 GEM
@@ -11,8 +11,8 @@ GEM
     concurrent-ruby (1.0.2)
     connection_pool (2.2.0)
     diff-lcs (1.2.5)
-    dogstatsd-ruby (2.0.0)
-    rack (2.0.1)
+    dogstatsd-ruby (2.2.0)
+    rack (1.6.5)
     rack-protection (1.5.3)
       rack
     rake (11.3.0)
@@ -30,10 +30,10 @@ GEM
       diff-lcs (>= 1.2.0, < 2.0)
       rspec-support (~> 3.5.0)
     rspec-support (3.5.0)
-    sidekiq (4.2.2)
+    sidekiq (4.2.3)
       concurrent-ruby (~> 1.0)
       connection_pool (~> 2.2, >= 2.2.0)
-      rack-protection (~> 1.5)
+      rack-protection (>= 1.5.0)
       redis (~> 3.2, >= 3.2.1)
 
 PLATFORMS
@@ -46,4 +46,4 @@ DEPENDENCIES
   sidekiq-datadog!
 
 BUNDLED WITH
-   1.11.2
+   1.14.6
