@@ -18,7 +18,7 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_runtime_dependency(%q<sidekiq>)
-  s.add_runtime_dependency(%q<dogstatsd-ruby>, "~> 2.0.0")
+  s.add_runtime_dependency(%q<dogstatsd-ruby>, ">= 2.0.0")
 
   s.add_development_dependency(%q<rake>)
   s.add_development_dependency(%q<bundler>)
