@@ -11,7 +11,7 @@ module Mock
 
   class Statsd < ::Datadog::Statsd
     def timing(stat, ms, opts={}); super(stat, 333, opts); end
-    def flush_buffer; end
-    alias :send_stat :send_to_buffer
+    def send_to_socket(message); written.push(message); end
+    def written; @written ||= []; end
   end
 end
