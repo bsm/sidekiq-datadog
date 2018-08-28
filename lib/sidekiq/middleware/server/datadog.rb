@@ -61,7 +61,7 @@ module Sidekiq
               queued_ms = ((start - Time.at(job["enqueued_at"])) * 1000).round
             end
             name = underscore(job['wrapped'] || worker.class.to_s)
-            tags = @tags.map do |tag|
+            tags = @tags.flat_map do |tag|
               case tag when String then tag when Proc then tag.call(worker, job, queue, error) end
             end
 
