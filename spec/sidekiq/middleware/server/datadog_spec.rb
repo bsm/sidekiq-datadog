@@ -2,7 +2,7 @@ require 'spec_helper'
 
 describe Sidekiq::Middleware::Server::Datadog do
 
-  let(:statsd) { Mock::Statsd.new(nil, nil, {}, 10000) }
+  let(:statsd) { Mock::Statsd.new('localhost', 55555) }
   let(:worker) { Mock::Worker.new }
   let(:tags) {
     ["custom:tag", lambda{|w, *| "worker:#{w.class.name[1..2]}" }]
