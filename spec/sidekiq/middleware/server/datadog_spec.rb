@@ -7,9 +7,10 @@ describe Sidekiq::Middleware::Server::Datadog do
   let(:tags) {
     ["custom:tag", lambda{|w, *| "worker:#{w.class.name[1..2]}" }]
   }
+  let(:options) { {} }
 
   before  { statsd.written.clear }
-  subject { described_class.new hostname: "test.host", statsd: statsd, tags: tags }
+  subject { described_class.new(hostname: "test.host", statsd: statsd, tags: tags, **options) }
 
   it 'should send an increment and timing event for each job run' do
     subject.call(worker, { 'enqueued_at' => 1461881794.9312189 }, 'default') { "ok" }
@@ -56,4 +57,18 @@ describe Sidekiq::Middleware::Server::Datadog do
     end
   end
 
+  context 'with a list of skipped tags' do
+    let(:tags) { [] }
+    let(:options) { { skip_tags: %i[env host name] } }
+
+    it 'should send metrics without the skipped tags' do
+      subject.call(worker, { 'enqueued_at' => 1461881794.9312189 }, 'default') { 'ok' }
+
+      expect(statsd.written).to eq([
+        "sidekiq.job:1|c|#queue:default,status:ok",
+        "sidekiq.job.time:333|ms|#queue:default,status:ok",
+        "sidekiq.job.queued_time:333|ms|#queue:default,status:ok"
+      ])
+    end
+  end
 end
