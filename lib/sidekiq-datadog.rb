@@ -1,1 +1,1 @@
-require "sidekiq/middleware/server/datadog"
+require 'sidekiq/middleware/server/datadog'

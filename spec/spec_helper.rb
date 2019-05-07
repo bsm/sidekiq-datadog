@@ -1,8 +1,4 @@
 ENV['RACK_ENV'] ||= 'test'
-
-$LOAD_PATH.unshift(File.join(File.dirname(__FILE__), '..', 'lib'))
-$LOAD_PATH.unshift(File.dirname(__FILE__))
-
 require 'sidekiq-datadog'
 
 module Mock
@@ -10,8 +6,16 @@ module Mock
   end
 
   class Statsd < ::Datadog::Statsd
-    def timing(stat, ms, opts={}); super(stat, 333, opts); end
-    def send_stat(message); written.push(message); end
-    def written; @written ||= []; end
+    def timing(stat, _millis, opts={})
+      super(stat, 333, opts)
+    end
+
+    def send_stat(message)
+      messages.push message
+    end
+
+    def messages
+      @messages ||= []
+    end
   end
 end

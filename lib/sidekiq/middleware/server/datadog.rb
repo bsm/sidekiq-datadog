@@ -24,24 +24,20 @@ module Sidekiq
         # * <tt>:statsd_host</tt> - the statsD host, defaults to "localhost", respects +STATSD_HOST+ env variable
         # * <tt>:statsd_port</tt> - the statsD port, defaults to 8125, respects +STATSD_PORT+ env variable
         # * <tt>:statsd</tt>      - custom statsd instance
-        def initialize(opts = {})
+        def initialize(opts={})
           hostname      = opts[:hostname] || ENV['INSTRUMENTATION_HOSTNAME'] || Socket.gethostname
-          statsd_host   = opts[:statsd_host] || ENV['STATSD_HOST'] || "localhost"
+          statsd_host   = opts[:statsd_host] || ENV['STATSD_HOST'] || 'localhost'
           statsd_port   = (opts[:statsd_port] || ENV['STATSD_PORT'] || 8125).to_i
 
-          @metric_name  = opts[:metric_name] || "sidekiq.job"
+          @metric_name  = opts[:metric_name] || 'sidekiq.job'
           @statsd       = opts[:statsd] || ::Datadog::Statsd.new(statsd_host, statsd_port)
           @tags         = opts[:tags] || []
-          @skipped_tags = (opts[:skip_tags] || []).map(&:to_s)
+          @skip_tags    = Array(opts[:skip_tags]).map(&:to_s)
 
-          if include_tag?(:host) && @tags.none? { |t| t =~ /^host\:/ }
-            @tags.push("host:#{hostname}")
-          end
+          @tags.push("host:#{hostname}") if include_tag?('host') && @tags.none? {|t| t =~ /^host\:/ }
 
           env = Sidekiq.options[:environment] || ENV['RACK_ENV']
-          if env && include_tag?(:env) && @tags.none? { |t| t =~ /^env\:/ }
-            @tags.push("env:#{ENV['RACK_ENV']}")
-          end
+          @tags.push("env:#{ENV['RACK_ENV']}") if env && include_tag?('env') && @tags.none? {|t| t =~ /^env\:/ }
         end
 
         def call(worker, job, queue, *)
@@ -57,8 +53,20 @@ module Sidekiq
 
         private
 
-        def record(worker, job, queue, start, error = nil)
-          ms = ((Time.now - start) * 1000).round
+        def record(worker, job, queue, start, error=nil)
+          msec = ((Time.now - start) * 1000).round
+          tags = build_tags(worker, job, queue, error)
+
+          @statsd.increment @metric_name, tags: tags
+          @statsd.timing "#{@metric_name}.time", msec, tags: tags
+
+          if job['enqueued_at'] # rubocop:disable Style/GuardClause
+            queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
+            @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
+          end
+        end
+
+        def build_tags(worker, job, queue=nil, error=nil)
           name = underscore(job['wrapped'] || worker.class.to_s)
           tags = @tags.flat_map do |tag|
             case tag
@@ -66,38 +74,31 @@ module Sidekiq
             when Proc then tag.call(worker, job, queue, error)
             end
           end
-
-          tags.push "name:#{name}" if include_tag?(:name)
-          tags.push "queue:#{queue}" if queue && include_tag?(:queue)
-
-          if error
-            kind = underscore(error.class.name.sub(/Error$/, ''))
-            tags.push 'status:error' if include_tag?(:status)
-            tags.push "error:#{kind}" if include_tag?(:error)
-          else
-            tags.push 'status:ok' if include_tag?(:status)
-          end
-
           tags.compact!
 
-          @statsd.increment @metric_name, tags: tags
-          @statsd.timing "#{@metric_name}.time", ms, tags: tags
+          tags.push "name:#{name}" if include_tag?('name')
+          tags.push "queue:#{queue}" if queue && include_tag?('queue')
 
-          if job['enqueued_at']
-            queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
-            @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
+          if error.nil?
+            tags.push 'status:ok' if include_tag?('status')
+          else
+            kind = underscore(error.class.name.sub(/Error$/, ''))
+            tags.push 'status:error' if include_tag?('status')
+            tags.push "error:#{kind}" if include_tag?('error')
           end
+
+          tags
         end
 
         def include_tag?(tag)
-          !@skipped_tags.include?(tag.to_s)
+          !@skip_tags.include?(tag)
         end
 
         def underscore(word)
           word = word.to_s.gsub(/::/, '/')
-          word.gsub!(/([A-Z\d]+)([A-Z][a-z])/,'\1_\2')
-          word.gsub!(/([a-z\d])([A-Z])/,'\1_\2')
-          word.tr!("-", "_")
+          word.gsub!(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2')
+          word.gsub!(/([a-z\d])([A-Z])/, '\1_\2')
+          word.tr!('-', '_')
           word.downcase
         end
       end

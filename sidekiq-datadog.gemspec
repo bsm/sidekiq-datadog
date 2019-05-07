@@ -1,26 +1,27 @@
-# -*- encoding: utf-8 -*-
-lib = File.expand_path('../lib', __FILE__)
+lib = File.expand_path('lib', __dir__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'sidekiq/datadog/version'
 
 Gem::Specification.new do |s|
-  s.name          = "sidekiq-datadog"
+  s.name          = 'sidekiq-datadog'
   s.version       = Sidekiq::Datadog::VERSION.dup
-  s.authors       = ["Dimitrij Denissenko"]
-  s.email         = ["dimitrij@blacksquaremedia.com"]
-  s.description   = %q{Datadog metrics for sidekiq}
-  s.summary       = %q{Datadog metrics for sidekiq}
-  s.homepage      = "https://github.com/bsm/sidekiq-datadog"
+  s.authors       = ['Dimitrij Denissenko']
+  s.email         = ['dimitrij@blacksquaremedia.com']
+  s.description   = 'Datadog metrics for sidekiq'
+  s.summary       = 'Datadog metrics for sidekiq'
+  s.homepage      = 'https://github.com/bsm/sidekiq-datadog'
 
-  s.files         = `git ls-files`.split($/)
-  s.executables   = s.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
+  s.files         = `git ls-files`.split($INPUT_RECORD_SEPARATOR)
+  s.executables   = s.files.grep(%r{^bin/}).map {|f| File.basename(f) }
   s.test_files    = s.files.grep(%r{^(spec)/})
-  s.require_paths = ["lib"]
+  s.require_paths = ['lib']
+  s.required_ruby_version = '>= 2.3'
 
-  s.add_runtime_dependency(%q<sidekiq>)
-  s.add_runtime_dependency(%q<dogstatsd-ruby>, ">= 3.3.0")
+  s.add_runtime_dependency('dogstatsd-ruby', '>= 4.2.0')
+  s.add_runtime_dependency('sidekiq')
 
-  s.add_development_dependency(%q<rake>)
-  s.add_development_dependency(%q<bundler>)
-  s.add_development_dependency(%q<rspec>, "~> 3.0")
+  s.add_development_dependency('bundler')
+  s.add_development_dependency('rake')
+  s.add_development_dependency('rspec')
+  s.add_development_dependency('rubocop')
 end
