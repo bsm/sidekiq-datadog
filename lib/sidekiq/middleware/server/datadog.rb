@@ -41,7 +41,10 @@ module Sidekiq
         end
 
         def call(worker, job, queue, *)
-          start = Time.now
+          start = {
+            time: Time.now,
+            clock: Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond),
+          }
           begin
             yield
             record(worker, job, queue, start)
@@ -54,14 +57,14 @@ module Sidekiq
         private
 
         def record(worker, job, queue, start, error=nil)
-          msec = ((Time.now - start) * 1000).round
+          msec = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - start[:clock]
           tags = build_tags(worker, job, queue, error)
 
           @statsd.increment @metric_name, tags: tags
           @statsd.timing "#{@metric_name}.time", msec, tags: tags
 
           if job['enqueued_at'] # rubocop:disable Style/GuardClause
-            queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
+            queued_ms = ((start[:time] - Time.at(job['enqueued_at'])) * 1000).round
             @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
           end
         end

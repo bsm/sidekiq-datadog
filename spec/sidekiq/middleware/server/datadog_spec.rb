@@ -8,25 +8,42 @@ describe Sidekiq::Middleware::Server::Datadog do
     ['custom:tag', ->(w, *) { "worker:#{w.class.name[1..2]}" }]
   end
   let(:options) { {} }
+  let(:enqueued_at) { 1461881794.9312189 }
+  let(:expected_queued_time_ms) { 444 }
 
-  before  { statsd.messages.clear }
+  before do
+    statsd.messages.clear
+
+    clock_gettime_call_count = 0
+    expect(Process).to receive(:clock_gettime).twice do
+      clock_gettime_call_count += 1
+      clock_gettime_call_count == 1 ? 0 : 333
+    end
+
+    Timecop.freeze(Time.at(enqueued_at + expected_queued_time_ms.to_f / 1000))
+  end
+
   subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
 
   it 'should send an increment and timing event for each job run' do
-    subject.call(worker, { 'enqueued_at' => 1461881794.9312189 }, 'default') { 'ok' }
+    subject.call(worker, { 'enqueued_at' => enqueued_at }, 'default') { 'ok' }
     expect(statsd.messages).to eq([
-      'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
-      'sidekiq.job.time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
-      'sidekiq.job.queued_time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
+      'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
+        'queue:default,status:ok',
+      'sidekiq.job.time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
+        'queue:default,status:ok',
+      "sidekiq.job.queued_time:#{expected_queued_time_ms}|ms|#custom:tag,worker:oc,host:test.host,"\
+        'env:test,name:mock/worker,queue:default,status:ok',
     ])
   end
 
   it 'should support wrappers' do
-    subject.call(worker, { 'enqueued_at' => 1461881794.9312189, 'wrapped' => 'wrap' }, nil) { 'ok' }
+    subject.call(worker, { 'enqueued_at' => enqueued_at, 'wrapped' => 'wrap' }, nil) { 'ok' }
     expect(statsd.messages).to eq([
       'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:wrap,status:ok',
       'sidekiq.job.time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:wrap,status:ok',
-      'sidekiq.job.queued_time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:wrap,status:ok',
+      "sidekiq.job.queued_time:#{expected_queued_time_ms}|ms|#custom:tag,worker:oc,host:test.host,"\
+        'env:test,name:wrap,status:ok',
     ])
   end
 
@@ -36,8 +53,10 @@ describe Sidekiq::Middleware::Server::Datadog do
     }).to raise_error('doh!')
 
     expect(statsd.messages).to eq([
-      'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,status:error,error:runtime',
-      'sidekiq.job.time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,status:error,error:runtime',
+      'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
+        'status:error,error:runtime',
+      'sidekiq.job.time:333|ms|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
+        'status:error,error:runtime',
     ])
   end
 
@@ -47,12 +66,15 @@ describe Sidekiq::Middleware::Server::Datadog do
     end
 
     it 'should generate the correct tags' do
-      subject.call(worker, { 'enqueued_at' => 1461881794.9312189, 'args' => [1, 2] }, 'default') { 'ok' }
+      subject.call(worker, { 'enqueued_at' => enqueued_at, 'args' => [1, 2] }, 'default') { 'ok' }
 
       expect(statsd.messages).to eq([
-        'sidekiq.job:1|c|#custom:tag,arg:1,arg:2,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
-        'sidekiq.job.time:333|ms|#custom:tag,arg:1,arg:2,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
-        'sidekiq.job.queued_time:333|ms|#custom:tag,arg:1,arg:2,host:test.host,env:test,name:mock/worker,queue:default,status:ok',
+        'sidekiq.job:1|c|#custom:tag,arg:1,arg:2,host:test.host,env:test,name:mock/worker,'\
+          'queue:default,status:ok',
+        'sidekiq.job.time:333|ms|#custom:tag,arg:1,arg:2,host:test.host,env:test,name:mock/worker,'\
+          'queue:default,status:ok',
+        "sidekiq.job.queued_time:#{expected_queued_time_ms}|ms|#custom:tag,arg:1,arg:2,"\
+          'host:test.host,env:test,name:mock/worker,queue:default,status:ok',
       ])
     end
   end
@@ -67,7 +89,7 @@ describe Sidekiq::Middleware::Server::Datadog do
       expect(statsd.messages).to eq([
         'sidekiq.job:1|c|#queue:default,status:ok',
         'sidekiq.job.time:333|ms|#queue:default,status:ok',
-        'sidekiq.job.queued_time:333|ms|#queue:default,status:ok',
+        "sidekiq.job.queued_time:#{expected_queued_time_ms}|ms|#queue:default,status:ok",
       ])
     end
   end
