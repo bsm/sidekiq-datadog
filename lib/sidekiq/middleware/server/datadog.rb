@@ -42,19 +42,21 @@ module Sidekiq
 
         def call(worker, job, queue, *)
           start = Time.now
+          clock = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond)
+
           begin
             yield
-            record(worker, job, queue, start)
+            record(worker, job, queue, start, clock)
           rescue StandardError => e
-            record(worker, job, queue, start, e)
+            record(worker, job, queue, start, clock, e)
             raise
           end
         end
 
         private
 
-        def record(worker, job, queue, start, error=nil)
-          msec = ((Time.now - start) * 1000).round
+        def record(worker, job, queue, start, clock, error=nil) # rubocop:disable Metrics/ParameterLists
+          msec = Process.clock_gettime(Process::CLOCK_MONOTONIC, :millisecond) - clock
           tags = build_tags(worker, job, queue, error)
 
           @statsd.increment @metric_name, tags: tags
