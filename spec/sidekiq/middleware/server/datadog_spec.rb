@@ -93,4 +93,16 @@ describe Sidekiq::Middleware::Server::Datadog do
       ])
     end
   end
+
+  context 'when sidekiq/api is required' do
+    before do
+      require 'sidekiq/api'
+    end
+
+    it 'should not raise any errors' do
+      expect {
+        subject.call(worker, { 'enqueued_at' => enqueued_at }, 'default') { 'ok' }
+      }.not_to raise_error
+    end
+  end
 end
