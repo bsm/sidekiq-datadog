@@ -100,9 +100,9 @@ describe Sidekiq::Middleware::Server::Datadog do
     end
 
     it 'should not raise any errors' do
-      expect {
+      expect do
         subject.call(worker, { 'enqueued_at' => enqueued_at }, 'default') { 'ok' }
-      }.not_to raise_error
+      end.not_to raise_error
     end
   end
 end
