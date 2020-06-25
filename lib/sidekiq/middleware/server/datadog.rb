@@ -7,7 +7,6 @@ module Sidekiq
   module Middleware
     module Server
       class Datadog
-
         # Configure and install datadog instrumentation. Example:
         #
         #   Sidekiq.configure_server do |config|
@@ -24,20 +23,18 @@ module Sidekiq
         # * <tt>:statsd_host</tt> - the statsD host, defaults to "localhost", respects +STATSD_HOST+ env variable
         # * <tt>:statsd_port</tt> - the statsD port, defaults to 8125, respects +STATSD_PORT+ env variable
         # * <tt>:statsd</tt>      - custom statsd instance
-        def initialize(opts={})
-          hostname      = opts[:hostname] || ENV['INSTRUMENTATION_HOSTNAME'] || Socket.gethostname
-          statsd_host   = opts[:statsd_host] || ENV['STATSD_HOST'] || 'localhost'
-          statsd_port   = (opts[:statsd_port] || ENV['STATSD_PORT'] || 8125).to_i
+        def initialize(opts = {})
+          statsd_host = opts[:statsd_host] || ENV['STATSD_HOST'] || 'localhost'
+          statsd_port = (opts[:statsd_port] || ENV['STATSD_PORT'] || 8125).to_i
 
           @metric_name  = opts[:metric_name] || 'sidekiq.job'
           @statsd       = opts[:statsd] || ::Datadog::Statsd.new(statsd_host, statsd_port)
           @tags         = opts[:tags] || []
           @skip_tags    = Array(opts[:skip_tags]).map(&:to_s)
 
-          @tags.push("host:#{hostname}") if include_tag?('host') && @tags.none? {|t| t =~ /^host\:/ }
-
-          env = Sidekiq.options[:environment] || ENV['RACK_ENV']
-          @tags.push("env:#{ENV['RACK_ENV']}") if env && include_tag?('env') && @tags.none? {|t| t =~ /^env\:/ }
+          env  = Sidekiq.options[:environment] || ENV['RACK_ENV']
+          host = opts[:hostname] || ENV['INSTRUMENTATION_HOSTNAME'] || Socket.gethostname
+          setup_defaults(host: host, env: env)
         end
 
         def call(worker, job, queue, *)
@@ -55,20 +52,20 @@ module Sidekiq
 
         private
 
-        def record(worker, job, queue, start, clock, error=nil) # rubocop:disable Metrics/ParameterLists
+        def record(worker, job, queue, start, clock, error = nil)
           msec = ::Process.clock_gettime(::Process::CLOCK_MONOTONIC, :millisecond) - clock
           tags = build_tags(worker, job, queue, error)
 
           @statsd.increment @metric_name, tags: tags
           @statsd.timing "#{@metric_name}.time", msec, tags: tags
 
-          if job['enqueued_at'] # rubocop:disable Style/GuardClause
-            queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
-            @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
-          end
+          return unless job['enqueued_at']
+
+          queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
+          @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
         end
 
-        def build_tags(worker, job, queue=nil, error=nil)
+        def build_tags(worker, job, queue = nil, error = nil)
           name = underscore(job['wrapped'] || worker.class.to_s)
           tags = @tags.flat_map do |tag|
             case tag
@@ -90,6 +87,18 @@ module Sidekiq
           end
 
           tags
+        end
+
+        def setup_defaults(hash)
+          hash.each do |key, val|
+            key = key.to_s
+            next unless val && include_tag?(key)
+
+            prefix = "#{key}:"
+            next if @tags.any? {|t| t.is_a?(String) && t.start_with?(prefix) }
+
+            @tags.push [key, val].join(':')
+          end
         end
 
         def include_tag?(tag)

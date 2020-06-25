@@ -1,7 +1,6 @@
 require 'spec_helper'
 
 describe Sidekiq::Middleware::Server::Datadog do
-
   let(:statsd) { Mock::Statsd.new('localhost', 55555) }
   let(:worker) { Mock::Worker.new }
   let(:tags) do
