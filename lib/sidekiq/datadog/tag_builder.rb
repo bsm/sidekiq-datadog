@@ -10,16 +10,16 @@ module Sidekiq
         setup_defaults(host: host, env: env)
       end
 
-      def build_tags(worker, job, queue = nil, error = nil)
+      def build_tags(worker_or_worker_class, job, queue = nil, error = nil)
         tags = @tags.flat_map do |tag|
           case tag
           when String then tag
-          when Proc then tag.call(worker, job, queue, error)
+          when Proc then tag.call(worker_or_worker_class, job, queue, error)
           end
         end
         tags.compact!
 
-        tags.push "name:#{job_name(worker, job)}" if include_tag?('name')
+        tags.push "name:#{job_name(worker_or_worker_class, job)}" if include_tag?('name')
         tags.push "queue:#{queue}" if queue && include_tag?('queue')
 
         if error.nil?
@@ -35,8 +35,16 @@ module Sidekiq
 
       private
 
-      def job_name(worker, job)
-        underscore(job['wrapped'] || worker.class.to_s)
+      def job_name(worker_or_worker_class, job)
+        # Client middleware sends a `worker_class` String,
+        # whereas Server middleware send a Worker object
+        worker_class = if worker_or_worker_class.is_a?(String)
+                         worker_or_worker_class
+                       else
+                         worker_or_worker_class.class.to_s
+                       end
+
+        underscore(job['wrapped'] || worker_class)
       end
 
       def setup_defaults(hash)

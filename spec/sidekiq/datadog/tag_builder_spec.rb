@@ -73,4 +73,13 @@ describe Sidekiq::Datadog::TagBuilder do
       expect(result).to include('status:error')
     end
   end
+
+  context 'with a worker_class instead of a Worker object' do
+    let(:worker_class) { 'Module::Worker' }
+
+    it 'reports the error class, and status' do
+      result = subject.build_tags(worker_class, job, queue, error)
+      expect(result).to include('name:module/worker')
+    end
+  end
 end
