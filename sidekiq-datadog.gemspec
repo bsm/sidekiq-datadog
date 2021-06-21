@@ -17,13 +17,13 @@ Gem::Specification.new do |s|
   s.require_paths = ['lib']
   s.required_ruby_version = '>= 2.5'
 
-  s.add_runtime_dependency('dogstatsd-ruby', '>= 4.2.0')
+  s.add_runtime_dependency('dogstatsd-ruby', '>= 5.1.0')
   s.add_runtime_dependency('sidekiq')
 
   s.add_development_dependency('bundler')
   s.add_development_dependency('rake')
   s.add_development_dependency('rspec')
-  s.add_development_dependency('rubocop')
+  s.add_development_dependency('rubocop-bsm')
   s.add_development_dependency('rubocop-performance')
   s.add_development_dependency('timecop')
 end

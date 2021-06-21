@@ -1,8 +1,10 @@
 require 'spec_helper'
 
 describe Sidekiq::Middleware::Server::Datadog do
+  subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
+
   let(:statsd) { Mock::Statsd.new('localhost', 55555) }
-  let(:worker) { Mock::Worker.new }
+  let(:worker) { instance_double('Worker') }
   let(:tags) do
     ['custom:tag', ->(w, *) { "worker:#{w.class.name[1..2]}" }]
   end
@@ -22,9 +24,7 @@ describe Sidekiq::Middleware::Server::Datadog do
     Timecop.freeze(Time.at(enqueued_at + expected_queued_time_ms.to_f / 1000))
   end
 
-  subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
-
-  it 'should send an increment and timing event for each job run' do
+  it 'sends an increment and timing event for each job run' do
     subject.call(worker, { 'enqueued_at' => enqueued_at }, 'default') { 'ok' }
     expect(statsd.messages).to eq([
       'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
@@ -36,7 +36,7 @@ describe Sidekiq::Middleware::Server::Datadog do
     ])
   end
 
-  it 'should support wrappers' do
+  it 'supports wrappers' do
     subject.call(worker, { 'enqueued_at' => enqueued_at, 'wrapped' => 'wrap' }, nil) { 'ok' }
     expect(statsd.messages).to eq([
       'sidekiq.job:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:wrap,status:ok',
@@ -46,7 +46,7 @@ describe Sidekiq::Middleware::Server::Datadog do
     ])
   end
 
-  it 'should handle errors' do
+  it 'handles errors' do
     expect(lambda {
       subject.call(worker, {}, nil) { raise 'doh!' }
     }).to raise_error('doh!')
@@ -64,7 +64,7 @@ describe Sidekiq::Middleware::Server::Datadog do
       ['custom:tag', ->(_w, j, *) { j['args'].map {|n| "arg:#{n}" } }]
     end
 
-    it 'should generate the correct tags' do
+    it 'generates the correct tags' do
       subject.call(worker, { 'enqueued_at' => enqueued_at, 'args' => [1, 2] }, 'default') { 'ok' }
 
       expect(statsd.messages).to eq([
@@ -82,7 +82,7 @@ describe Sidekiq::Middleware::Server::Datadog do
     let(:tags) { [] }
     let(:options) { { skip_tags: %i[env host name] } }
 
-    it 'should send metrics without the skipped tags' do
+    it 'sends metrics without the skipped tags' do
       subject.call(worker, { 'enqueued_at' => 1461881794.9312189 }, 'default') { 'ok' }
 
       expect(statsd.messages).to eq([
@@ -98,7 +98,7 @@ describe Sidekiq::Middleware::Server::Datadog do
       require 'sidekiq/api'
     end
 
-    it 'should not raise any errors' do
+    it 'does not raise any errors' do
       expect do
         subject.call(worker, { 'enqueued_at' => enqueued_at }, 'default') { 'ok' }
       end.not_to raise_error

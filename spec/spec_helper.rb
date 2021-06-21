@@ -3,7 +3,7 @@ require 'sidekiq-datadog'
 require 'timecop'
 
 module Mock
-  class Worker; end
+  class Worker; end # rubocop:disable Lint/EmptyClass
 
   class Statsd < ::Datadog::Statsd
     def send_stat(message)
