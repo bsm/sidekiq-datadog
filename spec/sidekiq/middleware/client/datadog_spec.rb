@@ -1,6 +1,8 @@
 require 'spec_helper'
 
 describe Sidekiq::Middleware::Client::Datadog do
+  subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
+
   let(:statsd) { Mock::Statsd.new('localhost', 55555) }
   let(:worker_class) { 'Mock::Worker' }
   let(:tags) do
@@ -12,9 +14,7 @@ describe Sidekiq::Middleware::Client::Datadog do
     statsd.messages.clear
   end
 
-  subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
-
-  it 'should send an increment event for each job enqueued' do
+  it 'sends an increment event for each job enqueued' do
     subject.call(worker_class, {}, 'default', nil) { 'ok' }
     expect(statsd.messages).to eq([
       'sidekiq.job_enqueued:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:mock/worker,'\
@@ -22,7 +22,7 @@ describe Sidekiq::Middleware::Client::Datadog do
     ])
   end
 
-  it 'should support wrappers' do
+  it 'supports wrappers' do
     subject.call(worker_class, { 'wrapped' => 'wrap' }, nil, nil) { 'ok' }
     expect(statsd.messages).to eq([
       'sidekiq.job_enqueued:1|c|#custom:tag,worker:oc,host:test.host,env:test,name:wrap',
@@ -34,7 +34,7 @@ describe Sidekiq::Middleware::Client::Datadog do
       ['custom:tag', ->(_w, j, *) { j['args'].map {|n| "arg:#{n}" } }]
     end
 
-    it 'should generate the correct tags' do
+    it 'generates the correct tags' do
       subject.call(worker_class, { 'args' => [1, 2] }, 'default', nil) { 'ok' }
 
       expect(statsd.messages).to eq([
@@ -48,7 +48,7 @@ describe Sidekiq::Middleware::Client::Datadog do
     let(:tags) { [] }
     let(:options) { { skip_tags: %i[env host name] } }
 
-    it 'should send metrics without the skipped tags' do
+    it 'sends metrics without the skipped tags' do
       subject.call(worker_class, {}, 'default', nil) { 'ok' }
 
       expect(statsd.messages).to eq([
@@ -62,7 +62,7 @@ describe Sidekiq::Middleware::Client::Datadog do
       require 'sidekiq/api'
     end
 
-    it 'should not raise any errors' do
+    it 'does not raise any errors' do
       expect do
         subject.call(worker_class, {}, 'default', nil) { 'ok' }
       end.not_to raise_error

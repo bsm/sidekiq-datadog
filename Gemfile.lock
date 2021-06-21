@@ -2,61 +2,69 @@ PATH
   remote: .
   specs:
     sidekiq-datadog (0.5.3)
-      dogstatsd-ruby (>= 4.2.0)
+      dogstatsd-ruby (~> 4.2)
       sidekiq
 
 GEM
   remote: https://rubygems.org/
   specs:
-    ast (2.4.1)
-    connection_pool (2.2.3)
-    diff-lcs (1.4.2)
-    dogstatsd-ruby (4.8.1)
-    parallel (1.19.2)
-    parser (2.7.1.4)
+    ast (2.4.2)
+    connection_pool (2.2.5)
+    diff-lcs (1.4.4)
+    dogstatsd-ruby (4.8.3)
+    parallel (1.20.1)
+    parser (3.0.1.1)
       ast (~> 2.4.1)
     rack (2.2.3)
-    rack-protection (2.0.8.1)
-      rack
     rainbow (3.0.0)
-    rake (13.0.1)
-    redis (4.2.1)
-    regexp_parser (1.7.1)
+    rake (13.0.3)
+    redis (4.3.1)
+    regexp_parser (2.1.1)
     rexml (3.2.5)
-    rspec (3.9.0)
-      rspec-core (~> 3.9.0)
-      rspec-expectations (~> 3.9.0)
-      rspec-mocks (~> 3.9.0)
-    rspec-core (3.9.2)
-      rspec-support (~> 3.9.3)
-    rspec-expectations (3.9.2)
+    rspec (3.10.0)
+      rspec-core (~> 3.10.0)
+      rspec-expectations (~> 3.10.0)
+      rspec-mocks (~> 3.10.0)
+    rspec-core (3.10.1)
+      rspec-support (~> 3.10.0)
+    rspec-expectations (3.10.1)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.9.0)
-    rspec-mocks (3.9.1)
+      rspec-support (~> 3.10.0)
+    rspec-mocks (3.10.2)
       diff-lcs (>= 1.2.0, < 2.0)
-      rspec-support (~> 3.9.0)
-    rspec-support (3.9.3)
-    rubocop (0.86.0)
+      rspec-support (~> 3.10.0)
+    rspec-support (3.10.2)
+    rubocop (1.17.0)
       parallel (~> 1.10)
-      parser (>= 2.7.0.1)
+      parser (>= 3.0.0.0)
       rainbow (>= 2.2.2, < 4.0)
-      regexp_parser (>= 1.7)
+      regexp_parser (>= 1.8, < 3.0)
       rexml
-      rubocop-ast (>= 0.0.3, < 1.0)
+      rubocop-ast (>= 1.7.0, < 2.0)
       ruby-progressbar (~> 1.7)
-      unicode-display_width (>= 1.4.0, < 2.0)
-    rubocop-ast (0.0.3)
-      parser (>= 2.7.0.1)
-    rubocop-performance (1.6.1)
-      rubocop (>= 0.71.0)
-    ruby-progressbar (1.10.1)
-    sidekiq (6.0.7)
+      unicode-display_width (>= 1.4.0, < 3.0)
+    rubocop-ast (1.7.0)
+      parser (>= 3.0.1.1)
+    rubocop-bsm (0.6.0)
+      rubocop (~> 1.0)
+      rubocop-performance
+      rubocop-rake
+      rubocop-rspec
+    rubocop-performance (1.11.3)
+      rubocop (>= 1.7.0, < 2.0)
+      rubocop-ast (>= 0.4.0)
+    rubocop-rake (0.5.1)
+      rubocop
+    rubocop-rspec (2.4.0)
+      rubocop (~> 1.0)
+      rubocop-ast (>= 1.1.0)
+    ruby-progressbar (1.11.0)
+    sidekiq (6.2.1)
       connection_pool (>= 2.2.2)
       rack (~> 2.0)
-      rack-protection (>= 2.0.0)
-      redis (>= 4.1.0)
-    timecop (0.9.1)
-    unicode-display_width (1.7.0)
+      redis (>= 4.2.0)
+    timecop (0.9.4)
+    unicode-display_width (2.0.0)
 
 PLATFORMS
   ruby
@@ -65,10 +73,10 @@ DEPENDENCIES
   bundler
   rake
   rspec
-  rubocop
+  rubocop-bsm
   rubocop-performance
   sidekiq-datadog!
   timecop
 
 BUNDLED WITH
-   2.1.4
+   2.2.19
