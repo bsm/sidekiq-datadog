@@ -1,7 +1,7 @@
 sidekiq-datadog
 =============
 
-Datadog intrumentation for [Sidekiq](https://github.com/mperham/sidekiq), integrated via server middleware.
+Datadog instrumentation for [Sidekiq](https://github.com/mperham/sidekiq), integrated via server middleware.
 
 ## Installation
 
@@ -15,7 +15,17 @@ Or install:
 
 Configure it in an initializer:
 
+    Sidekiq.configure_client do |config|
+      config.client_middleware do |chain|
+        chain.add Sidekiq::Middleware::Client::Datadog
+      end
+    end
+
     Sidekiq.configure_server do |config|
+      config.client_middleware do |chain|
+        chain.add Sidekiq::Middleware::Client::Datadog
+      end
+
       config.server_middleware do |chain|
         chain.add Sidekiq::Middleware::Server::Datadog
       end
@@ -45,13 +55,36 @@ executed at runtime when the job is processed
 
     Sidekiq.configure_server do |config|
       config.server_middleware do |chain|
-        chain.add(Sidekiq::Middleware::Server::Datadog, tags: [->(worker, job, queue, error){
+        chain.add(Sidekiq::Middleware::Server::Datadog, tags: [->(worker_or_worker_class, job, queue, error){
           "source:#{job['source']}"
         }])
       end
     end
 
+    # NOTE: Your lambda will either receive a `Worker` object for the Server middleware, 
+    # or a String with the `worker_class` for the Client middleware. 
+    # If you are using that argument, your lambda should be able to handle both cases.
+
+You can supress some of the default tags from being emitted by passing in `skip_tags`. 
+This is also useful if you would like to change one of the default tags, you can define
+a custom lambda **and** define it as `skip_tags`
+
+
+    Sidekiq.configure_server do |config|
+      config.server_middleware do |chain|
+        chain.add(Sidekiq::Middleware::Server::Datadog,
+            skip_tags: ["name"], 
+            tags: [->(worker_or_worker_class, job, queue, error){
+                "name:#{ my_logic_for_name }"
+            }])
+      end
+    end
+
+
 #### supported options
+
+Both Client and Server middlewares support the same options:
+
  - *hostname* - the hostname used for instrumentation, defaults to system hostname. Can also be set with the `INSTRUMENTATION_HOSTNAME` env var.
  - *metric_name* - the metric name (prefix) to use, defaults to "sidekiq.job".
  - *tags* - array of custom tags. These can be plain strings or lambda blocks.
@@ -61,6 +94,22 @@ executed at runtime when the job is processed
  - *statsd* - custom statsd instance
 
 For more detailed configuration options, please see the [Documentation](http://www.rubydoc.info/gems/sidekiq-datadog).
+
+## Metrics exposed
+
+The client middleware will expose:
+- `sidekiq.job_enqueued` counter, with tags: `host`, `env`, `name` (the job name) and `queue`
+
+The server middleware will expose:
+- `sidekiq.job` counter, with tags: `host`, `env`, `name` (the job name), `queue`, 
+    and `status` (`ok` or `error`). If `status` is `error`, there will be an additional
+    `error` tag with the exception class.
+- `sidekiq.job.time` timing (`ms`) metric with the same tags, specifying the job runtime.
+- `sidekiq.job.queued_time` timing (`ms`) metric with the same tags, specifying how long
+    the job was waiting in the queue before starting.
+
+The base metric names `sidekiq.job` and `sidekiq.job_enqueued` can be overriden using the
+`metric_name` option.
 
 ## Contributing
 
