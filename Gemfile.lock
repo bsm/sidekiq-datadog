@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    sidekiq-datadog (0.5.3)
+    sidekiq-datadog (0.6.0)
       dogstatsd-ruby (~> 4.2)
       sidekiq
 
