@@ -63,6 +63,8 @@ module Sidekiq
 
           queued_ms = ((start - Time.at(job['enqueued_at'])) * 1000).round
           @statsd.timing "#{@metric_name}.queued_time", queued_ms, tags: tags
+
+          @statsd.flush if @statsd.respond_to?(:flush) # dogstatsd-ruby >= 5.0.0
         end
       end
     end
