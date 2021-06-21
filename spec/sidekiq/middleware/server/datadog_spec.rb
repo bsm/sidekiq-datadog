@@ -4,7 +4,7 @@ describe Sidekiq::Middleware::Server::Datadog do
   subject { described_class.new(hostname: 'test.host', statsd: statsd, tags: tags, **options) }
 
   let(:statsd) { Mock::Statsd.new('localhost', 55555) }
-  let(:worker) { instance_double('Worker') }
+  let(:worker) { Mock::Worker.new }
   let(:tags) do
     ['custom:tag', ->(w, *) { "worker:#{w.class.name[1..2]}" }]
   end
