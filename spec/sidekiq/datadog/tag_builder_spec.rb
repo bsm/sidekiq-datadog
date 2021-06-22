@@ -1,16 +1,15 @@
 require 'spec_helper'
 
 describe Sidekiq::Datadog::TagBuilder do
-  let(:custom_tags) { nil }
-  let(:skip_tags) { nil }
-  let(:custom_hostname) { nil }
-
   subject { described_class.new(custom_tags, skip_tags, custom_hostname) }
 
+  let(:custom_tags) { nil }
   let(:worker) { Mock::Worker.new }
   let(:job) { { 'enqueued_at' => 1461881794 } }
   let(:queue) { 'queue_name' }
   let(:error) { nil }
+  let(:skip_tags) { nil }
+  let(:custom_hostname) { nil }
 
   it 'builds basic default tags without any parameters' do
     result = subject.build_tags(worker, job, queue, error)

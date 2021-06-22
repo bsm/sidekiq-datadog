@@ -119,3 +119,18 @@ The base metric names `sidekiq.job` and `sidekiq.job_enqueued` can be overriden 
 4. Push to the branch (`git push origin my-new-feature`)
 5. Make a pull request
 
+
+**`dogstatsd-ruby` Version note:** `dogstatsd-ruby` has major backwards incompatibilities 
+between v4.8.3 and 5.0.0. This gem is compatible with both, and CI tests both versions.
+
+In order to test through both, we have 2 Gemfiles (and their respective `.lock` files):
+- `Gemfile`
+- `Gemfile_dogstats_v4`
+
+By default, everything runs against `dogstatsd-ruby` >= 5.0.
+
+To update `Gemfile_dogstats_v4.lock`, or run tests with c4.8:
+
+`BUNDLE_GEMFILE=Gemfile_dogstats_v4 bundle update`
+
+`BUNDLE_GEMFILE=Gemfile_dogstats_v4 bundle exec rspec`
